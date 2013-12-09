@@ -1,0 +1,5 @@
+tornado
+google-api-python-client
+gflags
+fabric
+
