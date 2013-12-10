@@ -1,5 +1,7 @@
 tornado
 google-api-python-client
-gflags
+python-gflags
 fabric
+
+-r ./urlcache/requirements.txt
 

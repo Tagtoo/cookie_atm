@@ -1,7 +1,9 @@
 # Created by http://gitignore.io
 
-### Google Cloud Platform ###
+### cookie_atm Project ###
 /client_secrets.json
+/oauth2.dat
+
 
 ### OSX ###
 .DS_Store
