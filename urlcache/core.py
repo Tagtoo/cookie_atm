@@ -1,6 +1,7 @@
 import redis
 import urllib2
 from multiprocessing import Process
+from utils import urlfetch
 
 
 class RedisBank(object):
@@ -25,7 +26,7 @@ class RedisBank(object):
         """
         delete key
         """
-        raise Exception("Not yet implemented.")
+        return self.redis_client.delete([key])
 
 
 class RedisThreadSave(object):
@@ -46,6 +47,10 @@ class UrlCacher(object):
         self.target_host = target_host
         self.bank = bank
 
+    def get_query_url(self, urlpath):
+        return "%s/%s" % (self.target_host, urlpath)
+
+
     def query(self, urlpath):
         """
         urlpath: /aaa/bb/cc (without host)
@@ -54,17 +59,18 @@ class UrlCacher(object):
         if self.bank.exists(urlpath):
             return self.bank.get(urlpath)
         else:
-            query_url = "%s/%s" % (self.target_host, urlpath)
-            req = urllib2.Request(query_url)
-
-            with urllib2.urlopen(req) as url_res:
-                content = url_res.read()
-
+            query_url = self.get_query_url(urlpath)
+            content = urlfetch(query_url)
             self.bank.set(urlpath, content)
             return content
 
-    def update(self, urlpath, content):
-        raise Exception("Not yet implemented.")
+    def update(self, urlpath):
+        query_url = self.get_query_url(urlpath) 
+        content = urlfetch(query_url)
+        self.bank.set(urlpath, content)
+
+        return content
+        
 
 
 
