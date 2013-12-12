@@ -64,9 +64,15 @@ class UrlCacher(object):
             self.bank.set(urlpath, content)
             return content
 
-    def update(self, urlpath):
-        query_url = self.get_query_url(urlpath) 
-        content = urlfetch(query_url)
+    def update(self, urlpath, content=None):
+
+        if content:
+            query_url = self.get_query_url(urlpath) 
+            content = urlfetch(query_url)
+        else:
+            pass
+
+
         self.bank.set(urlpath, content)
 
         return content

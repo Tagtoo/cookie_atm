@@ -30,8 +30,13 @@ class UrlCacheHandler(tornado.web.RequestHandler):
         request = self.request
         url_path = request.path
 
+
         if url_path in self.get_proxied_uris():
-            self.write(self.url_cacher.update(url_path))
+            if self.request.body:
+                content = self.request.body
+                self.write(self.url_cacher.update(url_path, content))
+            else:
+                self.write(self.url_cacher.update(url_path))
         
 
 if __name__ == "__main__":
