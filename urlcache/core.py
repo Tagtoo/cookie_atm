@@ -11,7 +11,7 @@ class RedisBank(object):
 
     def set(self, key, value, blocking=True):
         if blocking:
-            self.redis_client(key, value)
+            self.redis_client.set(key, value)
         else:
             rt = RedisThreadSave(self.pool, key, value)
             rt.start()
@@ -43,42 +43,35 @@ class RedisThreadSave(object):
 
 
 class UrlCacher(object):
-    def __init__(self, target_host, bank):
-        self.target_host = target_host
+    def __init__(self, bank):
         self.bank = bank
 
-    def get_query_url(self, urlpath):
-        return "%s/%s" % (self.target_host, urlpath)
+    def get_query_url(self, host, urlpath):
+        return "%s/%s" % (host, urlpath)
 
-
-    def query(self, urlpath):
+    def query(self, host, urlpath):
         """
         urlpath: /aaa/bb/cc (without host)
         """
-
         if self.bank.exists(urlpath):
+            print 'existed'
             return self.bank.get(urlpath)
         else:
-            query_url = self.get_query_url(urlpath)
+            print 'not exist: %s' % urlpath
+            print 'proxy target: %s' % host
+            query_url = self.get_query_url(host, urlpath)
             content = urlfetch(query_url)
             self.bank.set(urlpath, content)
             return content
 
-    def update(self, urlpath, content=None):
-
+    def update(self, host, urlpath, content=None):
         if content:
-            query_url = self.get_query_url(urlpath) 
+            query_url = self.get_query_url(host, urlpath) 
             content = urlfetch(query_url)
         else:
             pass
 
-
         self.bank.set(urlpath, content)
 
         return content
-        
-
-
-
-
 
