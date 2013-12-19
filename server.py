@@ -30,14 +30,19 @@ class UrlCacheHandler(tornado.web.RequestHandler):
         # deal with special rules
         for path, host in self.atm_settings.SPECIAL_ROUTES.items():
             self.router.add_route(path, host)
+
+    def init_timeouts(self):
+        self.timeout_rules = self.atm_settings.SPECIAL_TIMEOUTS
         
     def initialize(self):
         self.router = Router()
         self.redis_bank = RedisBank()
         self.url_cacher = UrlCacher(self.redis_bank)
         self.atm_settings = atm_settings
+        self.timeout_rules = {}
 
         self.init_routes()
+        self.init_timeouts()
 
     @asynchronous
     def get(self):
@@ -48,13 +53,19 @@ class UrlCacheHandler(tornado.web.RequestHandler):
         logger.info(url_path)
 
         if self.router.exist_route(url_path):
+            # determine timeout
+            if url_path in self.timeout_rules:
+                timeout = self.timeout_rules[url_path]
+            else:
+                timeout = self.atm_settings.DEFAULT_TIMEOUT
+
             query = request.query
             host = self.router.get_route(url_path)
             logger.info(host)
 
             query_url_path = "%s?%s" % (url_path, query) if query else url_path
             print "Request: %s" % query_url_path
-            response = self.url_cacher.query(host, query_url_path)
+            response = self.url_cacher.query(host, query_url_path, timeout=timeout)
             self.write(response)
 
     @asynchronous

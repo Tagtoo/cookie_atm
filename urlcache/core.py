@@ -55,7 +55,7 @@ class UrlCacher(object):
     def get_query_url(self, host, urlpath):
         return "%s/%s" % (host, urlpath)
 
-    def query(self, host, urlpath):
+    def query(self, host, urlpath, timeout=10):
         """
         urlpath: /aaa/bb/cc (without host)
         """
@@ -66,14 +66,14 @@ class UrlCacher(object):
             print 'not exist: %s' % urlpath
             print 'proxy target: %s' % host
             query_url = self.get_query_url(host, urlpath)
-            content = urlfetch(query_url)
+            content = urlfetch(query_url, timeout)
             self.bank.set(urlpath, content)
             return content
 
-    def update(self, host, urlpath, content=None):
+    def update(self, host, urlpath, content=None, timeout=10):
         if content:
             query_url = self.get_query_url(host, urlpath) 
-            content = urlfetch(query_url)
+            content = urlfetch(query_url, timeout)
         else:
             pass
 
