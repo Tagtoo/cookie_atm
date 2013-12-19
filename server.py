@@ -52,7 +52,7 @@ class UrlCacheHandler(tornado.web.RequestHandler):
             host = self.router.get_route(url_path)
             logger.info(host)
 
-            query_url_path = "%s?%s" % (url_path, query)
+            query_url_path = "%s?%s" % (url_path, query) if query else url_path
             print "Request: %s" % query_url_path
             response = self.url_cacher.query(host, query_url_path)
             self.write(response)
