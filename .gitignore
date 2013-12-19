@@ -3,6 +3,7 @@
 ### cookie_atm Project ###
 /client_secrets.json
 /oauth2.dat
+/atm_settings_local.py
 
 
 ### OSX ###
