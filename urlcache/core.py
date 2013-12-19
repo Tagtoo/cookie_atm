@@ -9,8 +9,14 @@ class RedisBank(object):
         self.pool = redis.ConnectionPool(host=host)
         self.redis_client = redis.Redis(connection_pool=self.pool)
 
-    def set(self, key, value, blocking=True):
-        if blocking:
+    def set(self, key, value, blocking=True, expire_time=3600):
+        """
+        blocking: do threading (not finished)
+        expire_time: (seconds) the expiration time for stored key
+        """
+        if blocking and expire_time:
+            self.redis_client.setex(key, value, expire_time)
+        elif blocking:
             self.redis_client.set(key, value)
         else:
             rt = RedisThreadSave(self.pool, key, value)
