@@ -1,5 +1,6 @@
 import tornado
 import tornado.web
+from tornado.web import asynchronous
 
 from urlcache.core import RedisBank, UrlCacher
 
@@ -38,6 +39,7 @@ class UrlCacheHandler(tornado.web.RequestHandler):
 
         self.init_routes()
 
+    @asynchronous
     def get(self):
         request = self.request
         url_path = request.path
@@ -55,6 +57,7 @@ class UrlCacheHandler(tornado.web.RequestHandler):
             response = self.url_cacher.query(host, query_url_path)
             self.write(response)
 
+    @asynchronous
     def post(self):
         request = self.request
         url_path = request.path

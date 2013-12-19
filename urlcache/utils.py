@@ -7,7 +7,7 @@ def resolve_url(url):
 def urlfetch(query_url):
     req = urllib2.Request(query_url)
 
-    url_res = urllib2.urlopen(req)
+    url_res = urllib2.urlopen(req, timeout=1)
     content = url_res.read()
 
     return content
