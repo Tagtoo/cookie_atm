@@ -68,6 +68,8 @@ class UrlCacheHandler(tornado.web.RequestHandler):
             response = self.url_cacher.query(host, query_url_path, timeout=timeout)
             self.write(response)
 
+        self.finish()
+
     @asynchronous
     def post(self):
         request = self.request
@@ -77,10 +79,13 @@ class UrlCacheHandler(tornado.web.RequestHandler):
             host = self.router.get_route(url_path)
             print host, url_path
             if self.request.body:
+                print 'body: %s' % self.request.body
                 content = self.request.body
                 self.write(self.url_cacher.update(host, url_path, content))
             else:
                 self.write(self.url_cacher.update(host, url_path))
+
+        self.finish()
         
 
 if __name__ == "__main__":

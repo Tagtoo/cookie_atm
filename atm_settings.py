@@ -1,7 +1,11 @@
+"""
+default settings template
+"""
 PROXIED_URLS = [
     "/hello",
     "/local.html",
-    "/hello3"
+    "/hello3",
+    "/test"
 ]
 
 """
@@ -23,8 +27,19 @@ DEFAULT_TIMEOUT = 2
 
 DEFAULT_PROXIED_HOST = "http://localhost:8000"
 
+TEST = False
+
+
 try:
+    """
+    if atm_settings_local.py exists, we could overwrite the setting with this
+    """
     from atm_settings_local import *
 except:
     pass
 
+"""
+import test setting if the test flag set to True
+"""
+if TEST:
+    from atm_settings_test import *

@@ -72,10 +72,10 @@ class UrlCacher(object):
 
     def update(self, host, urlpath, content=None, timeout=10):
         if content:
+            pass
+        else:
             query_url = self.get_query_url(host, urlpath) 
             content = urlfetch(query_url, timeout)
-        else:
-            pass
 
         self.bank.set(urlpath, content)
 
