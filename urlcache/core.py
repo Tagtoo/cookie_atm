@@ -2,6 +2,7 @@ import redis
 import urllib2
 from multiprocessing import Process
 from utils import urlfetch
+from jobs import cache_url
 
 
 class RedisBank(object):
@@ -65,10 +66,8 @@ class UrlCacher(object):
         else:
             print 'not exist: %s' % urlpath
             print 'proxy target: %s' % host
-            query_url = self.get_query_url(host, urlpath)
-            content = urlfetch(query_url, timeout)
-            self.bank.set(urlpath, content)
-            return content
+            cache_url(host, urlpath, timeout)
+            return ""
 
     def update(self, host, urlpath, content=None, timeout=10):
         if content:

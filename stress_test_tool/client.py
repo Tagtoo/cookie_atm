@@ -53,9 +53,13 @@ def main():
 
     encoded = proto_encode(TEST_MESSAGE)
 
+    # get value
+    msg = send_message(test_url)
+
     # set value
     send_message(test_url, method='POST', body=encoded)
     received = send_message(test_url)
+
 
     print proto_decode(received)
 
