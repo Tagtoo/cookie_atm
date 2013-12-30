@@ -56,25 +56,29 @@ class UrlCacher(object):
     def get_query_url(self, host, urlpath):
         return "%s/%s" % (host, urlpath)
 
-    def query(self, host, urlpath, timeout=10):
+    def query(self, host, urlpath, timeout=10, callback=None):
         """
         urlpath: /aaa/bb/cc (without host)
         """
         if self.bank.exists(urlpath):
             print 'existed'
-            return self.bank.get(urlpath)
+            yield self.bank.get(urlpath)
         else:
             print 'not exist: %s' % urlpath
             print 'proxy target: %s' % host
             cache_url(host, urlpath, timeout)
-            return ""
+            yield ""
 
-    def update(self, host, urlpath, content=None, timeout=10):
+    def update(self, host, urlpath, content=None, timeout=10, async=False):
         if content:
             pass
         else:
             query_url = self.get_query_url(host, urlpath) 
-            content = urlfetch(query_url, timeout)
+            if async:
+                urlfetch(query_url, timeout, async=async)
+                return
+            else:
+                content = urlfetch(query_url, timeout)
 
         self.bank.set(urlpath, content)
 

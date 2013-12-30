@@ -27,13 +27,15 @@ DEFAULT_TIMEOUT = 2
 
 DEFAULT_PROXIED_HOST = "http://localhost:8000"
 
+REDIS_CONN_MAX = 50
+
 TEST = False
 
 
+"""
+if atm_settings_local.py exists, we could overwrite the setting with this
+"""
 try:
-    """
-    if atm_settings_local.py exists, we could overwrite the setting with this
-    """
     from atm_settings_local import *
 except:
     pass

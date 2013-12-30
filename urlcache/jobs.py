@@ -14,7 +14,7 @@ def cache_url(host, urlpath, timeout):
     urlcacher = UrlCacher(bank)
     
     try:
-        urlcacher.update(host, urlpath, timeout=timeout)
+        urlcacher.update(host, urlpath, timeout=timeout, async=True)
     except URLError:
         print 'URLError'
 

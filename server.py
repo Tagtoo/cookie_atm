@@ -1,6 +1,8 @@
 import tornado
 import tornado.web
-from tornado.web import asynchronous
+import tornado.gen
+import tornadoredis
+from tornado import httpclient
 
 from urlcache.core import RedisBank, UrlCacher
 
@@ -12,6 +14,25 @@ try:
 except:
     raise('Please create atm_settings.py for configuration')
 
+CONNECTION_POOL = tornadoredis.ConnectionPool(max_connections=atm_settings.REDIS_CONN_MAX, wait_for_available=True)
+
+def send_message(url, body=None, callback=None):
+    """
+    if handler == None: send a sync request
+    else handler == <function>: send async request
+    """
+    request = httpclient.HTTPRequest(url)
+
+    if body:
+        request.body = body
+        request.method = 'POST'
+    else:
+        request.method = 'GET'
+
+    client = httpclient.HTTPClient()
+    response = client.fetch(request)
+    print "HTTPRequest:%s:%s" % (url, len(response.body))
+    return response.body
 
 class UrlCacheHandler(tornado.web.RequestHandler):
     """
@@ -44,8 +65,10 @@ class UrlCacheHandler(tornado.web.RequestHandler):
         self.init_routes()
         self.init_timeouts()
 
-    @asynchronous
+    @tornado.web.asynchronous
+    @tornado.gen.engine
     def get(self):
+        c = tornadoredis.Client(connection_pool=CONNECTION_POOL)
         request = self.request
         url_path = request.path
 
@@ -64,14 +87,31 @@ class UrlCacheHandler(tornado.web.RequestHandler):
             logger.info(host)
 
             query_url_path = "%s?%s" % (url_path, query) if query else url_path
-            print "Request: %s" % query_url_path
-            response = self.url_cacher.query(host, query_url_path, timeout=timeout)
-            print "Response: %s" % response
-            self.write(response)
+            logger.info("Request: %s" % query_url_path)
 
-        self.finish()
+            exists = yield tornado.gen.Task(c.exists, query_url_path)
+            
+            if exists:
+                print 'exists'
+                response = yield tornado.gen.Task(c.get, query_url_path)
+                yield tornado.gen.Task(c.disconnect)
+                self.write(response)
+                self.finish()
+            else:
+                print 'not exsits'
+                content_url = "%s%s" % (host, query_url_path)
+                content_to_cache = send_message(content_url)
 
-    @asynchronous
+                print query_url_path, content_to_cache
+                #cache_result = yield tornado.gen.Task(c.setex, query_url_path, content_to_cache, 3600)
+                print query_url_path, len(content_to_cache)
+                cache_result = yield tornado.gen.Task(c.setex, query_url_path, 3600, content_to_cache)
+                yield tornado.gen.Task(c.disconnect)
+                self.write('')
+                self.finish()
+
+
+    @tornado.web.asynchronous
     def post(self):
         request = self.request
         url_path = request.path
