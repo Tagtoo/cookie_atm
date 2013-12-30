@@ -102,7 +102,6 @@ class UrlCacheHandler(tornado.web.RequestHandler):
                 content_url = "%s%s" % (host, query_url_path)
                 content_to_cache = send_message(content_url)
 
-                print query_url_path, content_to_cache
                 #cache_result = yield tornado.gen.Task(c.setex, query_url_path, content_to_cache, 3600)
                 print query_url_path, len(content_to_cache)
                 cache_result = yield tornado.gen.Task(c.setex, query_url_path, 3600, content_to_cache)
