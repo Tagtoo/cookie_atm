@@ -7,6 +7,7 @@ from tornado import httpclient
 from urlcache.core import RedisBank, UrlCacher
 
 from utils import Router
+import json
 import logging
 
 try:
@@ -15,6 +16,7 @@ except:
     raise('Please create atm_settings.py for configuration')
 
 CONNECTION_POOL = tornadoredis.ConnectionPool(max_connections=atm_settings.REDIS_CONN_MAX, wait_for_available=True)
+
 
 def send_message(url, body=None, callback=None):
     """
@@ -34,6 +36,7 @@ def send_message(url, body=None, callback=None):
     print "HTTPRequest:%s:%s" % (url, len(response.body))
     return response.body
 
+
 class UrlCacheHandler(tornado.web.RequestHandler):
     """
     Default handler
@@ -44,7 +47,7 @@ class UrlCacheHandler(tornado.web.RequestHandler):
         """
         # deal with default rules
         default_target = self.atm_settings.DEFAULT_PROXIED_HOST
-        
+
         for url in self.atm_settings.PROXIED_URLS:
             self.router.add_route(url, default_target)
         
@@ -109,7 +112,6 @@ class UrlCacheHandler(tornado.web.RequestHandler):
                 self.write('')
                 self.finish()
 
-
     @tornado.web.asynchronous
     def post(self):
         request = self.request
@@ -128,8 +130,77 @@ class UrlCacheHandler(tornado.web.RequestHandler):
         self.finish()
         
 
+class CounterHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous
+    @tornado.gen.engine
+    def get(self, key='default'):
+        """
+        Request: GET /counter/<key>
+        Response: <value of Counter <key>
+        """
+        logger = logging.getLogger('tornado.application')
+
+        # Redis client from connection pool
+        c = tornadoredis.Client(connection_pool=CONNECTION_POOL)
+
+        # get value of the key
+        value = yield tornado.gen.Task(c.get, key)
+
+        # output
+        self.write(str(value))
+        self.finish()
+
+        
+    @tornado.web.asynchronous
+    @tornado.gen.engine
+    def post(self, key='default'):
+        """
+        Request: POST /counter/<key>
+        Request Body: {
+            "offset": <integer: offset of adding value>,
+            "reset": 0
+        } (if not given, offset is set to 1 by default) 
+        """
+        logger = logging.getLogger('tornado.application')
+
+        # Redis client from connection pool
+        c = tornadoredis.Client(connection_pool=CONNECTION_POOL)
+
+        # default offset
+        offset = 1
+        reset = None
+
+        # determine parameters by body
+        if self.request.body:
+            body = self.request.body
+            config = json.loads(body)
+            try:
+                reset = config['reset']
+            except:
+                pass
+            try:
+                offset = config['offset']
+            except:
+                pass
+
+        # perform
+        if not ( reset == None ):
+            logger.info('reset rule')
+            result = yield tornado.gen.Task(c.set, key, reset)
+        elif not ( offset == 1 ):
+            logger.info('offset rule')
+            result = yield tornado.gen.Task(c.incrby, key, offset)
+        else:
+            logger.info('default rule')
+            result = yield tornado.gen.Task(c.incr, key)
+
+        yield tornado.gen.Task(c.disconnect)
+        self.write(str(result))
+        self.finish()
+        
 if __name__ == "__main__":
     application = tornado.web.Application([
+        (r"/counter/(?P<key>.*)", CounterHandler),
         (r"/.*", UrlCacheHandler),
     ])
     application.listen(80)
