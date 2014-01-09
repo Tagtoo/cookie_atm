@@ -1,3 +1,4 @@
+import base64
 
 class Router(object):
     def __init__(self, routes={}):
@@ -20,3 +21,10 @@ class Router(object):
             return url_with_argument.split('?')[-1]
         else:
             return url_with_argument
+
+
+def message_encode(msg):
+    return base64.b64encode(msg)
+
+def message_decode(encoded_msg):
+    return base64.b64decode(encoded_msg)

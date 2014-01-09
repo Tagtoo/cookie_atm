@@ -5,8 +5,9 @@ import tornadoredis
 from tornado import httpclient
 
 from urlcache.core import RedisBank, UrlCacher
-
 from utils import Router
+from utils import message_encode, message_decode
+
 import json
 import logging
 
@@ -98,12 +99,13 @@ class UrlCacheHandler(tornado.web.RequestHandler):
                 print 'exists'
                 response = yield tornado.gen.Task(c.get, query_url_path)
                 yield tornado.gen.Task(c.disconnect)
-                self.write(response)
+                self.write(message_decode(response))
                 self.finish()
             else:
                 print 'not exsits'
                 content_url = "%s%s" % (host, query_url_path)
                 content_to_cache = send_message(content_url)
+                content_to_cache = message_encode(content_to_cache)
 
                 #cache_result = yield tornado.gen.Task(c.setex, query_url_path, content_to_cache, 3600)
                 print query_url_path, len(content_to_cache)
